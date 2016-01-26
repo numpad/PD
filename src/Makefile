@@ -1,11 +1,10 @@
 CC=g++
-CSTD=c++11
 CWARN=-Wall -pedantic
-CLIB=-lm
+CLIB=-L/usr/local/lib -lSDL2
 
 input=main
 output=${input}
 
 all:
-	${CC} -std=${CSTD} ${CWARN} ${input}.cpp ${CLIB} -o${output}
+	${CC} ${CWARN} ${input}.cpp ${CLIB} -o${output}
 
