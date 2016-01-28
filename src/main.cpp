@@ -1,25 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL2/SDL.h>
+#include "qw.h"
 
 int main(int argc, char *argv[]) {
 	
-	if (SDL_Init(SDL_INIT_VIDEO)) {
-		printf("SDL_Init failed: %s\n", SDL_GetError());
-	}
-	
-	SDL_Window *window = SDL_CreateWindow("SDL funktioniert!",
-										  SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-										  800, 600, SDL_WINDOW_SHOWN);
-	
-	if (window == NULL) {
-		printf("Window creation failed: %s\n", SDL_GetError());
-		return 1;
-	}
+	qw_screen(800, 600, 0, "Projekt Defense");
 
-	SDL_Delay(3000);
-	
-	SDL_DestroyWindow(window);
+	while (qw_running()) {
+		qw_fill(100, 120, 200);
+		qw_color(200, 100, 120, 255);
+		qw_fillrect(qw_mousex - 20, qw_mousey - 20, 40, 40);
+		
+		qw_redraw();
+		
+		if (qw_keydown(QW_KEY(ESCAPE))) {
+			qw_quit();
+		}
+	}
 
 	return 0;
 }
