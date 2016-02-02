@@ -10,10 +10,9 @@ int main(int argc, char *argv[]) {
 
 	while (qw_running()) {
 		qw_fill(100, 120, 200);
-		//qw_color(200, 100, 120, 255);
-		//qw_fillrect(qw_mousex - 20, qw_mousey - 20, 40, 40);
-		
-		qw_moveimage(background, -qw_mousex_next * 0.5, -qw_mousey_next * 0.5);
+		qw_color(200, 100, 120, 255);
+		qw_fillrect(qw_mousex - 20, qw_mousey - 20, 40, 40);
+
 		qw_drawimage(background);
 
 		qw_redraw();

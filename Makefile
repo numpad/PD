@@ -1,4 +1,4 @@
-CC=g++
+CC=clang
 CWARN=-Wall -pedantic
 CLIB=-lSDL2 -lSDL2_image -Ilib/QW
 
@@ -7,5 +7,5 @@ input=main
 output=${input}
 
 all:
-	${CC} ${CWARN} ${src_dir}/${input}.cpp ${CLIB} -o${output}
+	clear && ${CC} ${CWARN} ${src_dir}/${input}.cpp ${CLIB} -o${output} && ./${input}
 
