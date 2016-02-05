@@ -2,33 +2,53 @@
 #include <stdlib.h>
 #include "qw.h"
 
+SDL_Point *load_waypoints(const char *level_folder, int *count) {
+	char file[128];
+	strcpy(file, level_folder);
+	strcat(file, "/path.csv");
+	
+	FILE *fp = fopen(file, "r");
+	if (!fp) {
+		printf("Failed to open '%s'\n", file);
+		return NULL;
+	}
+
+	fscanf(fp, "%d\n", count);
+	
+	SDL_Point *points = malloc(sizeof(SDL_Point) * *count);
+	for (int i = 0; i < *count; ++i) {
+		int xp, yp;
+		fscanf(fp, "%d,%d\n", &xp, &yp);
+		points[i] = (SDL_Point){xp, yp};
+	}
+
+	fclose(fp);
+
+	return points;
+}
+
 int main(int argc, char *argv[]) {
 
 	qw_screen(800, 600, 0, "Projekt Defense");
 	
-	qw_image background = qw_loadimage("assets/bg.png");
+	qw_image background = qw_loadimage("assets/levels/level_1/background.png");
+	
+	int waypoints_count;
+	SDL_Point *waypoints = load_waypoints("assets/levels/level_1", &waypoints_count);
 
 	while (qw_running()) {
-		qw_fill(100, 120, 200);
-		qw_color(200, 100, 120, 255);
-		qw_fillrect(qw_mousex - 20, qw_mousey - 20, 40, 40);
-		
 		qw_drawimage(background);
 		
-		if (qw_mousedown(SDL_BUTTON_LEFT))
-			qw_placeimage(background, qw_mousex, qw_mousey);
-
-		if (qw_keydown(QW_KEY(RIGHT)))
-			qw_moveimage(background, 3, 0);
-		if (qw_keydown(QW_KEY(LEFT)))
-			qw_moveimage(background, -3, 0);
-
+		qw_color(200, 100, 120, 255);
+		SDL_RenderDrawLines(qw_renderer, waypoints, waypoints_count);
+		
 		qw_redraw();
 		if (qw_keydown(QW_KEY(ESCAPE))) {
 			qw_quit();
 		}
 	}
 	
+	free(waypoints);
 	qw_destroyimage(background);
 	
 	return 0;
