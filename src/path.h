@@ -1,6 +1,7 @@
 #ifndef PATH_H
 #define PATH_H
 
+/* Weg für AI */
 typedef struct {
 	SDL_Point *points;
 	int points_count;
