@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "qw.h"
+#include "QW/qw.h"
 
 SDL_Point point_new(int x, int y) {
 	return (SDL_Point) {
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		qw_color(200, 100, 120, 255);
+		qw_color(100, 120, 200, 255);
 		SDL_RenderDrawLines(qw_renderer, points, points_i);
 
 		qw_redraw();

@@ -2,6 +2,7 @@
 #define ENEMY_H
 
 #include "QW/qw.h"
+#include "level_data.h"
 #include "vector.h"
 
 /* Gegner haben position & wegpunkt information */
@@ -18,12 +19,12 @@ typedef struct {
 } enemy;
 
 /* Erstelle neuen gegner */
-enemy enemy_new(ai_path wps) {
+enemy enemy_new(level_data *ld) {
 	return (enemy) {
-		.pos = vector_new(wps.points[0].x, wps.points[0].y),
+		.pos = vector_new(ld->waypoints.points[0].x, ld->waypoints.points[0].y),
 		.dir = vector_new(0, 0),
 		.waypoint = 0,
-		.sprite = qw_loadimage("assets/levels/level_1/enemies/penis.png"),
+		.sprite = qw_loadimage("assets/levels/level_1/enemies/blob.png"),
 		.dead = 0
 	};
 }
