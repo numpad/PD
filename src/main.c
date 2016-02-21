@@ -56,6 +56,11 @@ void enemy_spawn(level_data *ld, spawn_data *sd, enemy *enemies, int *enemies_le
 }
 
 int main(int argc, char *argv[]) {
+	if (argc == 1) {
+		puts("use: ./main <level>");
+		return 1;
+	}
+
 	qw_screen(800, 600, 0, "Projekt Defense");
 	
 	level_data current_level = level_data_new(argv[1]); /* z.B. "assets/levels/level_1" */
