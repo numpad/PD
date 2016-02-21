@@ -13,32 +13,46 @@ typedef struct {
 	/* Momentaner wegpunkt */
 	int waypoint;
 	/* Aussehen */
-	qw_image sprite;
+	qw_image *sprite;
 	/* Lebt gegner noch */
 	int dead;
+	
+	/* Geschwindigkeit */
+	float speed;
 } enemy;
 
 /* Erstelle neuen gegner */
-enemy enemy_new(level_data *ld) {
-	return (enemy) {
+enemy enemy_new(level_data *ld, spawn_data *sd) {
+	enemy e = (enemy) {
 		.pos = vector_new(ld->waypoints.points[0].x, ld->waypoints.points[0].y),
 		.dir = vector_new(0, 0),
 		.waypoint = 0,
-		.sprite = qw_loadimage("assets/levels/level_1/enemies/blob.png"),
-		.dead = 0
+		.sprite = sd->sprite, //qw_loadimage("assets/levels/level_1/enemies/blob.png"),
+		.dead = 0,
+		.speed = sd->speed
 	};
+	
+	return e;
 }
 
 
 /* Rendere gegner */
 void enemy_draw(enemy *enemy) {
-	qw_imagerotation(&enemy->sprite, vector_angle(enemy->pos, vector_add(enemy->pos, enemy->dir)));
-	qw_placeimage(enemy->sprite, enemy->pos.x - qw_imagewidth(enemy->sprite) / 2, enemy->pos.y - qw_imageheight(enemy->sprite) / 2);
-	qw_drawimage(enemy->sprite);
+	const float angle = vector_angle(enemy->pos, vector_add(enemy->pos, enemy->dir));
+	qw_imagerotation(enemy->sprite, angle);
+#ifdef DEBUG
+	char text[128];
+	sprintf(text, "%g", angle);
+	
+	qw_color(90, 60, 230, 255);
+	qw_write(text, enemy->pos.x, enemy->pos.y - 50);
+#endif
+	qw_placeimage(*enemy->sprite, enemy->pos.x - qw_imagewidth(*enemy->sprite) / 2, enemy->pos.y - qw_imageheight(*enemy->sprite) / 2);
+	qw_drawimage(*enemy->sprite);
 }
 
 /* Bewege gegner `e` entlang dem pfad `waypoints` mit einer geschwindigkeit von `speed`  */
-void enemy_move(enemy *e, ai_path waypoints, float speed) {
+void enemy_move(enemy *e, ai_path waypoints) {
 	/* Wähle nächsten wegpunkt als ziel */
 	int wp_i = e->waypoint + 1;
 	/* Überprüfe ob es der letzte wegpunkt ist */
@@ -52,7 +66,7 @@ void enemy_move(enemy *e, ai_path waypoints, float speed) {
 	vector_t target = vector_new(waypoints.points[wp_i].x, waypoints.points[wp_i].y);
 	/* calculate distance to next point, if we are close enough select the waypoint after that */
 	float distance = vector_len(vector_sub(target, e->pos));
-	if (distance < 2.f) {
+	if (distance < e->speed) {
 		++e->waypoint;
 		/* update target vector */
 		target = vector_new(waypoints.points[wp_i].x, waypoints.points[wp_i].y);
@@ -68,7 +82,7 @@ void enemy_move(enemy *e, ai_path waypoints, float speed) {
 	
 	/* Calculate direction to walk in */
 	e->dir = vector_normalize(vector_sub(target, e->pos));
-	e->dir = vector_smult(e->dir, speed);
+	e->dir = vector_smult(e->dir, e->speed);
 	
 	/* Finally update the enemy's position */
 	e->pos = vector_add(e->pos, e->dir);
