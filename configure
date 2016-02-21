@@ -1,0 +1,5 @@
+# Install dependencies from github
+echo Downloading QW...
+cd lib/
+git clone https://github.com/numpad/QW.git
+echo Finished!
