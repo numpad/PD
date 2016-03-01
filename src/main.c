@@ -142,7 +142,8 @@ int main(int argc, char *argv[]) {
 			qw_quit();
 		}
 	}
-	
+
+	/* Gebe ressourcen wieder frei */
 	free(spawn_times);
 	spawn_data_destroyall(sd_all, enemies_count);
 	level_data_destroy(&current_level);	
