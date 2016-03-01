@@ -7,7 +7,7 @@
 #include "enemy.h"
 #include "vector.h"
 
-int load_spawns(const char *folder, int *spawntime) {
+int load_spawns(const char *folder, int *spawntime, int *spawnindex) {
 	/* Lädt /path.csv aus dem level ordner */
 	char file[128];
 	strcpy(file, folder);
@@ -27,16 +27,17 @@ int load_spawns(const char *folder, int *spawntime) {
 	    spawntime_max = 64;
 	
 	float time;
-	char name[64];
-	while (fscanf(fp, "%g,%s\n", &time, name) != EOF) {
+	int enemy_index;
+	while (fscanf(fp, "%g,%d\n", &time, &enemy_index) != EOF) {
 		int time_to_spawn = (int)(time * 60.f);
 		
 		/* qw_tick_count beginnt mit dem wert 1 */
 		if ((int)time == 0)
 			time_to_spawn = 1;
 #ifdef DEBUG
-		printf("Spawntime [%d]: %d '%s'\n", spawntime_i, time_to_spawn, name);
+		printf("Spawntime [%d]: %d index '%d'\n", spawntime_i, time_to_spawn, enemy_index);
 #endif
+		spawnindex[spawntime_i] = enemy_index;
 		spawntime[spawntime_i++] = time_to_spawn;
 		
 		/* Alloziert mehr Speicher für Spawnzeiten */
@@ -101,8 +102,9 @@ int main(int argc, char *argv[]) {
 	int enemies_count = 0;
 	spawn_data *sd_all = spawn_data_loadall(&current_level, &enemies_count);
 
+	int *spawn_index = malloc(sizeof(int) * 64);
 	int *spawn_times = malloc(sizeof(int) * 64);
-	int spawn_times_count = load_spawns(current_level.path, spawn_times);
+	int spawn_times_count = load_spawns(current_level.path, spawn_times, spawn_index);
 	int spawn_times_i = 0;
 	
 	int enemies_len = 0;
@@ -112,16 +114,8 @@ int main(int argc, char *argv[]) {
 		level_data_drawbackground(&current_level);
 
 		if (spawn_times_i < spawn_times_count && spawn_times[spawn_times_i] == qw_tick_count) {
-			int spawn_index = 0;
-			
-			if (spawn_index > enemies_count)
-				spawn_index = enemies_count;
-
-			enemy_spawn(&current_level, &sd_all[spawn_index], enemies, &enemies_len);
+			enemy_spawn(&current_level, &sd_all[spawn_index[spawn_times_i]], enemies, &enemies_len);
 			++spawn_times_i;
-		}
-
-		if (qw_keydown(QW_KEY(LEFT))) {
 		}
 
 #ifdef DEBUG
@@ -145,6 +139,7 @@ int main(int argc, char *argv[]) {
 
 	/* Gebe ressourcen wieder frei */
 	free(spawn_times);
+	free(spawn_index);
 	spawn_data_destroyall(sd_all, enemies_count);
 	level_data_destroy(&current_level);	
 	
