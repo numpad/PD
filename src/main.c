@@ -55,6 +55,39 @@ void enemy_spawn(level_data *ld, spawn_data *sd, enemy *enemies, int *enemies_le
 	enemies[(*enemies_len)++] = enemy_new(ld, sd);
 }
 
+spawn_data *spawn_data_loadall(level_data *ld, int *count) {
+	spawn_data *spawnables = malloc(sizeof(spawn_data) * 3);
+	
+	/* benutze level pfad und lade ./load.enemies */
+	char enemies_load_path[128];
+	strcpy(enemies_load_path, ld->path);
+	strcat(enemies_load_path, "/load.enemies");
+
+	FILE *fp = fopen(enemies_load_path, "r");
+	if (fp == NULL) {
+		printf("Laden der Datei '%s' fehlgeschlagen!\n", enemies_load_path);
+		return NULL;
+	}
+	
+	
+	char name[64];
+	while (fscanf(fp, "%s\n", name) != EOF) {
+		spawnables[*count] = spawn_data_load(ld->enemy_path, name);
+		*count = *count + 1;
+	}
+
+	fclose(fp);
+
+	return spawnables;
+}
+
+void spawn_data_destroyall(spawn_data *sd, int count) {
+	for (int i = 0; i < count; ++i) {
+		spawn_data_destroy(&sd[i]);
+	}
+	free(sd);
+}
+
 int main(int argc, char *argv[]) {
 	if (argc == 1) {
 		puts("use: ./main <level>");
@@ -65,9 +98,9 @@ int main(int argc, char *argv[]) {
 	
 	level_data current_level = level_data_new(argv[1]); /* z.B. "assets/levels/level_1" */
 	
-	spawn_data sd_blob = spawn_data_load(current_level.enemy_path, "trump");
-	spawn_data sd_ship = spawn_data_load(current_level.enemy_path, "trump");
-	
+	int enemies_count = 0;
+	spawn_data *sd_all = spawn_data_loadall(&current_level, &enemies_count);
+
 	int *spawn_times = malloc(sizeof(int) * 64);
 	int spawn_times_count = load_spawns(current_level.path, spawn_times);
 	int spawn_times_i = 0;
@@ -79,7 +112,12 @@ int main(int argc, char *argv[]) {
 		level_data_drawbackground(&current_level);
 
 		if (spawn_times_i < spawn_times_count && spawn_times[spawn_times_i] == qw_tick_count) {
-			enemy_spawn(&current_level, &sd_blob, enemies, &enemies_len);
+			int spawn_index = 0;
+			
+			if (spawn_index > enemies_count)
+				spawn_index = enemies_count;
+
+			enemy_spawn(&current_level, &sd_all[spawn_index], enemies, &enemies_len);
 			++spawn_times_i;
 		}
 
@@ -106,9 +144,9 @@ int main(int argc, char *argv[]) {
 	}
 	
 	free(spawn_times);
+	spawn_data_destroyall(sd_all, enemies_count);
 	level_data_destroy(&current_level);	
-	spawn_data_destroy(&sd_blob);
-	spawn_data_destroy(&sd_ship);
+	
 	return 0;
 }
 
