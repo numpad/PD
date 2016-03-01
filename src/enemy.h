@@ -16,6 +16,7 @@ typedef struct {
 	qw_image *sprite;
 	/* Lebt gegner noch */
 	int dead;
+	int health;
 	
 	/* Geschwindigkeit */
 	float speed;
@@ -29,7 +30,8 @@ enemy enemy_new(level_data *ld, spawn_data *sd) {
 		.waypoint = 0,
 		.sprite = sd->sprite, //qw_loadimage("assets/levels/level_1/enemies/blob.png"),
 		.dead = 0,
-		.speed = sd->speed
+		.speed = sd->speed,
+		.health = sd->health
 	};
 	
 	return e;
@@ -42,7 +44,7 @@ void enemy_draw(enemy *enemy) {
 	qw_imagerotation(enemy->sprite, angle);
 #ifdef DEBUG
 	char text[128];
-	sprintf(text, "%g", angle);
+	sprintf(text, "%d", enemy->health);
 	
 	qw_color(90, 60, 230, 255);
 	qw_write(text, enemy->pos.x, enemy->pos.y - 50);

@@ -112,7 +112,8 @@ int main(int argc, char *argv[]) {
 	
 	while (qw_running()) {
 		level_data_drawbackground(&current_level);
-
+	
+		/* Gegner spawn logik */
 		if (spawn_times_i < spawn_times_count && spawn_times[spawn_times_i] == qw_tick_count) {
 			enemy_spawn(&current_level, &sd_all[spawn_index[spawn_times_i]], enemies, &enemies_len);
 			++spawn_times_i;
