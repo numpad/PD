@@ -10,5 +10,7 @@ input=main
 output=${input}
 
 all:
-	${CC} ${CSTD} ${CWARN} ${CDEF} ${CINCLUDE} ${src_dir}/${input}.c ${CLIB} -o${output}
+	${CC} ${CSTD} ${CWARN} ${CINCLUDE} ${src_dir}/${input}.c ${CLIB} -o${output}
 
+debug:
+	${CC} ${CSTD} ${CWARN} ${CDEF} ${CINCLUDE} ${src_dir}/${input}.c ${CLIB} -o${output}
