@@ -11,6 +11,8 @@ typedef struct {
 	qw_image *sprite;
 	int health;
 	float speed;
+	int width, height;
+	float scale;
 } spawn_data;
 
 /* Lädt daten zum spawnen eines bestimmten gegners */
@@ -35,7 +37,14 @@ spawn_data spawn_data_load(const char *level_folder, const char *name) {
 	
 	/* Speicher für spawn informationen */
 	spawn_data sd;
-	
+	/* Standardmäßige Daten */
+	sd.health = 1;
+	sd.name = "Gegner";
+	sd.speed = 1.f;
+	sd.width = 60;
+	sd.height = 60;
+	sd.scale = 1.f;
+
 	/* Lese Daten aus einem Key/Value dict im format "<key> = <val>", whitespace muss beachtet werden*/
 	char key[32];
 	char val[32];
@@ -48,6 +57,12 @@ spawn_data spawn_data_load(const char *level_folder, const char *name) {
 		} else if (!strcmp(key, "name")) {
 			sd.name = malloc(strlen(val) + 1);
 			strcpy(sd.name, val);
+		} else if (!strcmp(key, "width")) {
+			sscanf(val, "%d", &sd.width);
+		} else if (!strcmp(key, "height")) {
+			sscanf(val, "%d", &sd.height);
+		} else if (!strcmp(key, "scale")) {
+			sscanf(val, "%g", &sd.scale);
 		}
 	}
 	

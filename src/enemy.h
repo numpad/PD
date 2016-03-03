@@ -20,6 +20,12 @@ typedef struct {
 	
 	/* Geschwindigkeit */
 	float speed;
+
+	/* Breite und Höhe */
+	int width, height;
+	
+	unsigned int ticks_alive;
+	int frame, frames_count;
 } enemy;
 
 /* Erstelle neuen gegner */
@@ -31,9 +37,18 @@ enemy enemy_new(level_data *ld, spawn_data *sd) {
 		.sprite = sd->sprite, //qw_loadimage("assets/levels/level_1/enemies/blob.png"),
 		.dead = 0,
 		.speed = sd->speed,
-		.health = sd->health
+		.health = sd->health,
+		.width = sd->width * sd->scale,
+		.height = sd->height * sd->scale,
+		.ticks_alive = 0,
+		.frame = 0,
+		.frames_count = 4
 	};
 	
+	qw_image_setsrc(*(e.sprite), 0, 0, sd->width, sd->height);
+	qw_image_setsize(*(e.sprite), e.width, e.height);
+	qw_image_setcenter(e.sprite, e.width / 2, e.height / 2);
+
 	return e;
 }
 
@@ -49,8 +64,19 @@ void enemy_draw(enemy *enemy) {
 	qw_color(90, 60, 230, 255);
 	qw_write(text, enemy->pos.x, enemy->pos.y - 50);
 #endif
-	qw_placeimage(*enemy->sprite, enemy->pos.x - qw_imagewidth(*enemy->sprite) / 2, enemy->pos.y - qw_imageheight(*enemy->sprite) / 2);
+	qw_image_srcpos(*enemy->sprite, 60 * enemy->frame, 0);
+
+	qw_placeimage(*enemy->sprite, enemy->pos.x - enemy->width / 2, enemy->pos.y - (enemy->height / 3 * 2));
 	qw_drawimage(*enemy->sprite);
+	
+	if (enemy->ticks_alive % 10 == 0) {
+		++enemy->frame;
+	}
+
+	if (enemy->frame >= enemy->frames_count)
+		enemy->frame = 0;
+	
+	++(enemy->ticks_alive);
 }
 
 /* Bewege gegner `e` entlang dem pfad `waypoints` mit einer geschwindigkeit von `speed`  */
