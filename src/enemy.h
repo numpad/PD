@@ -42,7 +42,7 @@ enemy enemy_new(level_data *ld, spawn_data *sd) {
 		.height = sd->height * sd->scale,
 		.ticks_alive = 0,
 		.frame = 0,
-		.frames_count = 4
+		.frames_count = sd->frames
 	};
 	
 	qw_image_setsrc(*(e.sprite), 0, 0, sd->width, sd->height);
@@ -55,7 +55,17 @@ enemy enemy_new(level_data *ld, spawn_data *sd) {
 
 /* Rendere gegner */
 void enemy_draw(enemy *enemy) {
-	const float angle = vector_angle(enemy->pos, vector_add(enemy->pos, enemy->dir));
+	if (enemy->dead) {
+#ifdef DEBUG
+		qw_color(255, 0, 0, 255);
+		qw_write("DEAD", enemy->pos.x, enemy->pos.y);
+#endif
+		return;
+	}
+	
+	//const float angle = vector_angle(enemy->pos, vector_add(enemy->pos, enemy->dir));
+	const float angle = 0;
+
 	qw_imagerotation(enemy->sprite, angle);
 #ifdef DEBUG
 	char text[128];
@@ -67,6 +77,13 @@ void enemy_draw(enemy *enemy) {
 	qw_image_srcpos(*enemy->sprite, 60 * enemy->frame, 0);
 
 	qw_placeimage(*enemy->sprite, enemy->pos.x - enemy->width / 2, enemy->pos.y - (enemy->height / 3 * 2));
+	
+	/* bild horizontal spiegeln je nachdem in welche richtung `enemy` sich bewegt */
+	if (enemy->dir.x < 0)
+		qw_image_setflip(enemy->sprite, 1, 0);
+	else if (enemy->dir.x > 0)
+		qw_image_setflip(enemy->sprite, 0, 0);
+		
 	qw_drawimage(*enemy->sprite);
 	
 	if (enemy->ticks_alive % 10 == 0) {
@@ -81,6 +98,10 @@ void enemy_draw(enemy *enemy) {
 
 /* Bewege gegner `e` entlang dem pfad `waypoints` mit einer geschwindigkeit von `speed`  */
 void enemy_move(enemy *e, ai_path waypoints) {
+	/* ignoriere tote gegner */
+	if (e->dead)
+		return;
+	
 	/* Wähle nächsten wegpunkt als ziel */
 	int wp_i = e->waypoint + 1;
 	/* Überprüfe ob es der letzte wegpunkt ist */

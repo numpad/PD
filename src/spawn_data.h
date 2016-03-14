@@ -13,6 +13,7 @@ typedef struct {
 	float speed;
 	int width, height;
 	float scale;
+	int frames;
 } spawn_data;
 
 /* Lädt daten zum spawnen eines bestimmten gegners */
@@ -44,6 +45,7 @@ spawn_data spawn_data_load(const char *level_folder, const char *name) {
 	sd.width = 60;
 	sd.height = 60;
 	sd.scale = 1.f;
+	sd.frames = 4;
 
 	/* Lese Daten aus einem Key/Value dict im format "<key> = <val>", whitespace muss beachtet werden*/
 	char key[32];
@@ -63,6 +65,8 @@ spawn_data spawn_data_load(const char *level_folder, const char *name) {
 			sscanf(val, "%d", &sd.height);
 		} else if (!strcmp(key, "scale")) {
 			sscanf(val, "%g", &sd.scale);
+		} else if (!strcmp(key, "frames")) {
+			sscanf(val, "%d", &sd.frames);
 		}
 	}
 	

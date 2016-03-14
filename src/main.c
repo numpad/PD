@@ -6,6 +6,7 @@
 #include "path.h"
 #include "enemy.h"
 #include "vector.h"
+#include "tower.h"
 
 int load_spawns(const char *folder, int *spawntime, int *spawnindex) {
 	/* Lädt /path.csv aus dem level ordner */
@@ -74,7 +75,7 @@ spawn_data *spawn_data_loadall(level_data *ld, int *count) {
 	char name[64];
 	while (fscanf(fp, "%s\n", name) != EOF) {
 		spawnables[*count] = spawn_data_load(ld->enemy_path, name);
-		*count = *count + 1;
+		++(*count);
 	}
 
 	fclose(fp);
@@ -89,20 +90,28 @@ void spawn_data_destroyall(spawn_data *sd, int count) {
 	free(sd);
 }
 
+float distance_to_closest_tower(int x, int y, tower *towers, int towers_count) {
+	return 1000;
+}
+
 int main(int argc, char *argv[]) {
 	if (argc == 1) {
 		puts("use: ./main <level>");
 		return 1;
 	}
-
+	
+	/* Fenster erstellen */
 	qw_screen(800, 600, 0, "Projekt Defense");
 	
+	
+	/* Level laden */
 	level_data current_level = level_data_new(argv[1]); /* z.B. "assets/levels/level_1" */
 	
+	/* Gegner und spawnzeiten laden */
 	int enemies_count = 0;
 	spawn_data *sd_all = spawn_data_loadall(&current_level, &enemies_count);
-
 	int *spawn_index = malloc(sizeof(int) * 64);
+
 	int *spawn_times = malloc(sizeof(int) * 64);
 	int spawn_times_count = load_spawns(current_level.path, spawn_times, spawn_index);
 	int spawn_times_i = 0;
@@ -110,28 +119,101 @@ int main(int argc, char *argv[]) {
 	int enemies_len = 0;
 	enemy enemies[128];
 	
-	while (qw_running()) {
-		level_data_drawbackground(&current_level);
+	int towers_count = 0;
+	tower towers[64];
 	
-		/* Gegner spawn logik */
-		if (spawn_times_i < spawn_times_count && spawn_times[spawn_times_i] == qw_tick_count) {
-			enemy_spawn(&current_level, &sd_all[spawn_index[spawn_times_i]], enemies, &enemies_len);
-			++spawn_times_i;
-		}
+	/* Bilder für türme laden */
+	qw_image tower_1_image = qw_loadimage("assets/towers/tower_1.png");
+	qw_image tower_2_image = qw_loadimage("assets/towers/tower_2.png");
+	tower_data tower_1 = (tower_data) {&tower_1_image, 25, 3, 180., 50};
+	tower_data tower_2 = (tower_data) {&tower_2_image, 60, 1, 120., 40};
+	
+	qw_image game_logo = qw_loadimage("assets/logo.png");
+	
+	int money = 200;
+	int gamestate = 0;
+	while (qw_running()) {
+		switch (gamestate) {
+			case 0: { /* gamestate: menu */
+				qw_fill(100, 130, 230);
+				qw_drawimage(game_logo);
+				qw_color(0, 0, 0, 255);
+				qw_write("Druecke <Enter> zum starten", qw_width / 2 - 100, qw_height - 30);
+#ifdef DEBUG
+				qw_write("Project Defense - DEBUG VERSION 1.0", 10, 10);
+#endif
+				if (qw_keydown(QW_KEY(RETURN))) {
+					gamestate = 1;
+					qw_resetticks();
+				}
+
+				break;
+			}
+			case 1: { /* gamestate: game */
+				level_data_drawbackground(&current_level);
+			
+				/* Gegner spawn logik */
+				if (spawn_times_i < spawn_times_count && spawn_times[spawn_times_i] == qw_tick_count) {
+					enemy_spawn(&current_level, &sd_all[spawn_index[spawn_times_i]], enemies, &enemies_len);
+					++spawn_times_i;
+				}
+				
+				if (qw_mousedown(SDL_BUTTON_LEFT)) {
+					int xa = qw_mousex;
+					int ya = qw_mousey;
+					if (distance_to_closest_tower(xa, ya, towers, towers_count) > 100) {
+						if (money >= tower_1.price) {
+							towers[towers_count++] = tower_place(qw_mousex, qw_mousey, tower_1);
+							money -= tower_1.price;
+						}
+					}
+				}
+				
+				if (qw_mousedown(SDL_BUTTON_RIGHT)) {
+					int xa = qw_mousex;
+					int ya = qw_mousey;
+					if (distance_to_closest_tower(xa, ya, towers, towers_count) > 100) {
+						if (money >= tower_2.price) {
+							towers[towers_count++] = tower_place(qw_mousex, qw_mousey, tower_2);
+							money -= tower_2.price;
+						}
+					}
+				}
+				
+				for (int i = 0; i < towers_count; ++i) {
+					int has_killed = tower_attack(&towers[i], enemies, enemies_len);
+					if (has_killed)
+						money += 25;
+				}
 
 #ifdef DEBUG
-		qw_color(200, 100, 120, 255);
-		SDL_RenderDrawLines(qw_renderer, current_level.waypoints.points, current_level.waypoints.points_count);
+				qw_color(200, 100, 120, 255);
+				SDL_RenderDrawLines(qw_renderer, current_level.waypoints.points, current_level.waypoints.points_count);
 
-		qw_color(0, 0, 255, 255);
-		SDL_RenderDrawPoints(qw_renderer, current_level.waypoints.points, current_level.waypoints.points_count);
+				qw_color(0, 0, 255, 255);
+				SDL_RenderDrawPoints(qw_renderer, current_level.waypoints.points, current_level.waypoints.points_count);
 #endif
-		
-		for (int i = 0; i < enemies_len; ++i) {
-			enemy_move(&enemies[i], current_level.waypoints);
-			enemy_draw(&enemies[i]);
+				
+				for (int i = 0; i < enemies_len; ++i) {
+					enemy_move(&enemies[i], current_level.waypoints);
+					enemy_draw(&enemies[i]);
+				}
+				
+				for (int i = 0; i < towers_count; ++i) {
+					tower_draw(&towers[i]);
+				}
+				
+				/* Geld in die obere linke ecke schreiben */
+				qw_color(210, 150, 90, 255);
+				
+				char money_string[16];
+				sprintf(money_string, "Geld: $%d", money);
+				qw_write(money_string, 10, 10);
+
+				break;
+			}
 		}
-		
+
 		qw_redraw();
 		if (qw_keydown(QW_KEY(ESCAPE))) {
 			qw_quit();
@@ -142,7 +224,7 @@ int main(int argc, char *argv[]) {
 	free(spawn_times);
 	free(spawn_index);
 	spawn_data_destroyall(sd_all, enemies_count);
-	level_data_destroy(&current_level);	
+	level_data_destroy(&current_level);
 	
 	return 0;
 }
